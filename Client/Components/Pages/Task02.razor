@@ -1,0 +1,69 @@
+﻿@page "/task02"
+@using System.Text
+@rendermode InteractiveServer
+
+<h3>Task01 (XSD)</h3>
+
+<h5>
+    A REST API interface that includes a service that will be called by the POST
+    method and send an XML file to save a new entity in the system that will be
+    validated using an RNG file
+</h5>
+
+<textarea style="width: 800px" @bind="input">
+
+</textarea>
+
+<p>
+    @text
+</p>
+
+<button class="btn btn-primary" @onclick="onClick">Submit</button>
+
+@code {
+    string input = @"
+    <Words>
+        <Word>
+            <String>cat</String>
+            <Meaning>a cute little feline</Meaning>
+            <Invented>-500</Invented>
+        </Word>
+        <Word>
+            <String>car</String>
+            <Meaning>a big thing of steel with tires</Meaning>
+            <Invented>1850</Invented>
+        </Word>
+        <Word>
+            <String>bat</String>
+            <Meaning>a flying little cute animal</Meaning>
+            <Invented>-200</Invented>
+        </Word>
+    </Words>";
+    string text = "Hi";
+
+    private async void onClick()
+    {
+        var url = "http://localhost:5131/api/Word?schemaType=RNG";
+
+        using (var client = new HttpClient())
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = new StringContent(input, Encoding.UTF8, "application/xml")
+                };
+
+            try
+            {
+                HttpResponseMessage response = await client.SendAsync(request);
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(responseBody);
+                text = "Response " + response.StatusCode + ": " + responseBody;
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Request error: {e.Message}");
+            }
+        }
+    }
+}

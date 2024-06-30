@@ -1,0 +1,55 @@
+﻿@page "/task05"
+@using System.Text
+@rendermode InteractiveServer
+
+<h3>Task05</h3>
+
+<h5>
+    Create an XML-RPC server application that, using DHMZ
+    (https://vrijeme.hr/hrvatska_n.xml), will enable retrieval of the current
+    temperature according to the default city name.
+</h5>
+
+<label for="city" class"form-control">City</label>
+<input @bind="input" name="city" type="text" class="form-control" style="width: 800px" />
+
+<p>
+    @text
+</p>
+
+<button class="btn btn-primary" @onclick="onClick">Submit</button>
+
+@code {
+    string input = "";
+    string text = "Hi";
+
+    private async void onClick()
+    {
+        var url = "http://localhost:5131/WeatherForecast?city=" + input;
+
+        using (var client = new HttpClient())
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+            try
+            {
+                HttpResponseMessage response = await client.SendAsync(request);
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(responseBody);
+
+                if (responseBody.Equals("-273.15"))
+                {
+                    text = "City not found. DHMZ is very picky about names!";
+                } else
+                {
+                    text = "Temperature is " + responseBody;
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Request error: {e.Message}");
+            }
+        }
+    }
+}

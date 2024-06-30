@@ -1,0 +1,59 @@
+﻿@page "/task03"
+@using System.Text
+@rendermode InteractiveServer
+
+<h3>Task03</h3>
+
+<h5>
+    SOAP interface that includes a service that receives the term by which the
+    entity will be searched, and on the "backend" will generate an XML file
+    containing information about all entities, after which the generated file will be
+    searched using XPath expressions and return results.
+</h5>
+
+<label for="search" class="form-control">Search</label>
+<input @bind="word" name="search" type="text" class="form-control" style="width: 800px"/>
+
+<label for="path" class"form-control">Search</label>
+<input @bind="xpath" name="path" type="text" class="form-control" style="width: 800px"/>
+
+<p>
+    @text
+</p>
+
+<button class="btn btn-primary" @onclick="onClick">Click</button>
+
+@code {
+    string xpath = "//Word";
+    string word = "cat";
+    string text = "Hi";
+
+    private async void onClick()
+    {
+        var url = "http://localhost:5131/api/Soap/?xpath=" + xpath;
+
+        using (var client = new HttpClient())
+        {
+            string input = "<soap><word>" + word + "</word></soap>";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = new StringContent(input, Encoding.UTF8, "application/xml")
+                };
+
+            try
+            {
+                HttpResponseMessage response = await client.SendAsync(request);
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(responseBody);
+                text = "Response " + response.StatusCode + ": " + responseBody;
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Request error: {e.Message}");
+            }
+        }
+    }
+
+}

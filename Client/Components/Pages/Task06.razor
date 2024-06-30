@@ -1,0 +1,113 @@
+﻿@page "/task06"
+@using System.Text
+@using DAL.Requests
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@rendermode InteractiveServer
+
+<h3>Task06</h3>
+
+<h5>
+    Find an arbitrary public REST API and integrate with it using security keys
+    (50% of the maximum points) or implement your own REST API that will
+    implement security aspects using JWT tokens (100% of the maximum points)
+</h5>
+
+<EditForm Model="model" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputText @bind-Value="model.Username" placeholder="Username" />
+    <InputText @bind-Value="model.Password" placeholder="Password" type="password" />
+    <button class="btn btn-primary" type="submit">Login</button>
+</EditForm>
+
+<p>
+    @text
+</p>
+
+<button class="btn btn-primary" @onclick="onClickCheck">Check login</button>
+
+@code {
+    LoginRequest model = new LoginRequest();
+
+    string text = "Hi";
+    private string authToken;
+
+    private async Task HandleLogin()
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            authToken = null;
+            var url = "http://localhost:5131/api/Auth";
+
+            var jsonContent = JsonSerializer.Serialize(model);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await client.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var json = JsonSerializer.Deserialize<ApiLoginResponse>(responseBody);
+
+                    authToken = json.Token;
+                    text = "Login successful for " + json.Username;
+                }
+                else
+                {
+                    text = "Login failed: " + response.ReasonPhrase;
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                text = $"Request error: {e.Message}";
+            }
+        }
+    }
+
+    private async void onClickCheck(MouseEventArgs e)
+    {
+        if (string.IsNullOrEmpty(authToken))
+        {
+            text = "Not authenticated";
+            return;
+        }
+
+        using (HttpClient client = new HttpClient())
+        {
+            var requestUri = "http://localhost:5131/api/Info";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+
+            try
+            {
+                var response = await client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    text = "Protected resource response: " + responseBody;
+                }
+                else
+                {
+                    text = "Request failed: " + response.ReasonPhrase;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                text = $"Request error: {ex.Message}";
+            }
+        }
+    }
+
+    private class ApiLoginResponse
+    {
+        [JsonPropertyName("username")]
+        public string Username { get; set; }
+        [JsonPropertyName("token")]
+        public string Token { get; set; }
+    }
+}

@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
+		 datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+	<start>
+		<element name="Words">
+			<oneOrMore>
+				<element name="Word">
+					<element name="String">
+						<text/>
+					</element>
+					<element name="Meaning">
+						<text/>
+					</element>
+					<element name="Invented">
+						<data type="int"/>
+					</element>
+				</element>
+			</oneOrMore>
+		</element>
+	</start>
+</grammar>
